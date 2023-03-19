@@ -418,6 +418,8 @@ class Chessboard(Widget):
         super().__init__(**kwargs)
         self.game = game
         self.board = game.board
+        self.selected = ""
+        self.valid_moves = []
         self.pieces = deepcopy(self.board)
         self.squares = deepcopy(self.board) # to store pos of board squares
         self.coords = {
@@ -522,7 +524,6 @@ class Chessboard(Widget):
     def click(self, btn: str):
         if btn.text == "  ": return
         index = None
-        print(self.pieces[0][0].text)
         for y, row in enumerate(self.pieces):
             for x, col in enumerate(row):
                 if col == btn:
@@ -531,8 +532,18 @@ class Chessboard(Widget):
                     break
             if index is not None: break
         square = self.game.index_to_coords(index)
-        print(square)
         valid_moves = self.game.get_valid_moves(square)
+        if self.selected == "":
+            self.selected = square
+            self.valid_moves = valid_moves
+        else:
+            if square in self.valid_moves:
+                self.game.move(self.selected, square)
+                self.on_size()
+            else:
+                self.selected = ""
+                self.valid_moves = [] # Not needed but for clarity
+        print(square)
         print(valid_moves)
 
 
@@ -556,5 +567,4 @@ Bugs:
     - Check if player can castle into check (low chance)
     - Fix player being able to castle out of check
     - Fix player being able to castle the rook into check
-- white and black pos are swapped :/ (fixed but button still being weird; see output)
 """
