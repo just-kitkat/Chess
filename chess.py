@@ -556,5 +556,5 @@ Bugs:
     - Check if player can castle into check (low chance)
     - Fix player being able to castle out of check
     - Fix player being able to castle the rook into check
-- white and black pos are swapped :/
+- white and black pos are swapped :/ (fixed but button still being weird; see output)
 """
