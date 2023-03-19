@@ -491,7 +491,7 @@ class Chessboard(Widget):
                         button = Button(
                             text=self.board[y][x],
                             font_size=size[0]/2,
-                            pos=(x*pos, y*pos),
+                            pos=(x*pos, (7-y)*pos),
                             size=size,
                             halign="center",
                             valign="middle",
