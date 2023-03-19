@@ -242,6 +242,7 @@ class Game:
         piece = self.board[piece_y][piece_x]
         color = piece[0]
         valid_moves = []
+        print(piece, self.board)
 
         if piece[0] not in ("W", "B"):
             raise InvalidMove
@@ -514,10 +515,14 @@ class Chessboard(Widget):
                         self.pieces[y][x].text, self.pieces[y][x].font_size, self.pieces[y][x].pos, self.pieces[y][x].size = values
 
     def on_size(self, *args): # this func gets called when screen size changes (i think)
-        screen_size = min(args[1])
+        if args != ():
+            screen_size = min(args[1])
+        else:
+            screen_size = min(Window.size)
         print(screen_size)
         size = (screen_size * 0.125, screen_size * 0.125)
         pos_mult = screen_size/8
+        self.board = self.game.board
         self.draw_board(size, pos_mult)
         self.draw_pieces(size, pos_mult)
 
@@ -534,13 +539,21 @@ class Chessboard(Widget):
         valid_moves = []
         if btn.text != "  ": 
             valid_moves = self.game.get_valid_moves(square)
-        if self.selected == "":
+            valid_moves = [self.game.index_to_coords(ind) for ind in valid_moves]
+        if self.selected == "" and btn.text != "  ":
             self.selected = square
             self.valid_moves = valid_moves
+        elif btn.text == "  " and self.selected == "":
+            pass
         else:
             if square in self.valid_moves:
-                self.game.move(self.selected, square)
+                try:
+                    self.game.move(self.selected, square)
+                except InvalidMove:
+                    pass
                 self.on_size()
+                self.selected = ""
+                print("hi")
             else:
                 self.selected = ""
                 self.valid_moves = [] # Not needed but for clarity
