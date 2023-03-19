@@ -363,7 +363,7 @@ class Game:
                     print(f"Checkmate!!! {winner} won!")
                     exit()
             return True
-
+        print("Piece moved!")
         self.warning = "That was an invalid move!"
         raise InvalidMove("Invalid Move!")
 
@@ -493,7 +493,7 @@ class Chessboard(Widget):
                         button = Button(
                             text=self.board[y][x],
                             font_size=size[0]/2,
-                            pos=(x*pos, (7-y)*pos),
+                            pos=(x*pos, (7-y)*pos), # display fix
                             size=size,
                             halign="center",
                             valign="middle",
@@ -507,7 +507,7 @@ class Chessboard(Widget):
                         values = (
                             self.board[y][x], # text
                             size[0]/2, # font_size
-                            (x*pos, y*pos), # pos
+                            (x*pos, (7-y)*pos), # pos
                             size, # size
                         )
                         print(self.pieces[y][x])
@@ -522,7 +522,6 @@ class Chessboard(Widget):
         self.draw_pieces(size, pos_mult)
 
     def click(self, btn: str):
-        if btn.text == "  ": return
         index = None
         for y, row in enumerate(self.pieces):
             for x, col in enumerate(row):
@@ -532,7 +531,9 @@ class Chessboard(Widget):
                     break
             if index is not None: break
         square = self.game.index_to_coords(index)
-        valid_moves = self.game.get_valid_moves(square)
+        valid_moves = []
+        if btn.text != "  ": 
+            valid_moves = self.game.get_valid_moves(square)
         if self.selected == "":
             self.selected = square
             self.valid_moves = valid_moves
@@ -545,6 +546,7 @@ class Chessboard(Widget):
                 self.valid_moves = [] # Not needed but for clarity
         print(square)
         print(valid_moves)
+        print("selected:", self.selected)
 
 
 class ChessApp(App):
