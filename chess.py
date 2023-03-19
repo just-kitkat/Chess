@@ -576,6 +576,7 @@ To-Do:
 - En Passant
 - Switch between black and white moves
     - disabled for now so it is easier to test stuff!
+- Pawn promotion
 
 Bugs:
 - Castling:
