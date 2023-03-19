@@ -420,8 +420,13 @@ class Chessboard(Widget):
         self.board = game.board
         self.pieces = deepcopy(self.board)
         self.squares = deepcopy(self.board) # to store pos of board squares
+        self.coords = {
+            "y": [i for i in range(1, 9)], # [1, 2, ...]
+            "x": [chr(i) for i in range(97, 105)] # ["a", "b", ...]
+        }
 
     def draw_board(self, size, pos):
+        coord_size = size[0]/4, size[1]/4
         with self.canvas:
             # Draw board squares
             for i in range(8):
@@ -430,78 +435,105 @@ class Chessboard(Widget):
                         Color(0.98, 0.98, 0.88, 1)  # light square
                     else:
                         Color(0.5, 0.7, 0.4, 1)  # dark square
-                    rect = Rectangle(pos=(i*pos, j*pos), size=size)
-                    self.squares[i][j] = rect
+                    if self.squares[i][j] == self.board[i][j]:
+                        rect = Rectangle(pos=(i*pos, j*pos), size=size)
+                        self.squares[i][j] = rect
+                    else:
+                        self.squares[i][j].pos = (i*pos, j*pos)
+                        self.squares[i][j].size = size
 
             # Draw row indices
             for j in range(8):
-                label = Label(
-                    text=str(j+1),
-                    font_size=15,
-                    pos=(0, j*pos+33),
-                    size=(15, 15),
-                    halign="center",
-                    valign="middle",
-                    color=(0, 0, 0, 1)
-                    )
-                self.add_widget(label)
+                if self.coords["y"][7] == 8:
+                    label = Label(
+                        text=str(j+1),
+                        font_size=coord_size[0],
+                        pos=(0, j*pos+size[1]/1.5),
+                        size=coord_size,
+                        halign="center",
+                        valign="middle",
+                        color=(0, 0, 0, 1)
+                        )
+                    self.coords["y"][i] = label
+                    self.add_widget(label)
+                else:
+                    self.coords["y"][i].font_size = coord_size[0]
+                    self.coords["y"][i].pos = (0, j*pos+size[1]/1.5)
+                    self.coords["y"][i].size = coord_size
 
             # Draw column indices
             for i, col in enumerate("abcdefgh"):
-                label = Label(
-                    text=col,
-                    font_size=15,
-                    pos=(i*pos+33, 0),
-                    size=(15, 15),
-                    halign="center",
-                    valign="middle",
-                    color=(0, 0, 0, 1)
-                    )
-                self.add_widget(label)
+                if self.coords["x"][-1] == "h":
+                    label = Label(
+                        text=col,
+                        font_size=coord_size[0],
+                        pos=(i*pos+size[0]/1.33, 0),
+                        size=coord_size,
+                        halign="center",
+                        valign="middle",
+                        color=(0, 0, 0, 1)
+                        )
+                    self.coords["x"][i] = label
+                    self.add_widget(label)
+                else:
+                    self.coords["x"][i].font_size = coord_size[0]
+                    self.coords["x"][i].pos = (i*pos+size[0]/1.33, 0)
+                    self.coords["x"][i].size = coord_size
 
     def draw_pieces(self, size, pos):
         """
         todo: add the ability to remove/add a single chess piece
         """
         with self.canvas:
-            for i in range(8):
-                for j in range(8):
-                    if self.board[j][i] != "  ":
+            for y, row in enumerate(self.board):
+                for x, col in enumerate(row):
+                    if self.pieces[y][x] == col: # check if pieces store board or btns. if board, it means it hasnt been modified yet
                         button = Button(
-                            text=self.board[j][i],
-                            font_size=size[0]//2,
-                            pos=(i*pos, j*pos),
+                            text=self.board[y][x],
+                            font_size=size[0]/2,
+                            pos=(x*pos, y*pos),
                             size=size,
                             halign="center",
                             valign="middle",
                             color=(0, 0, 0, 1),
                             background_color=(0, 0, 0, 0)
                             )
-                        self.pieces[i][j] = button
+                        button.bind(on_release=self.click)
+                        self.pieces[y][x] = button
                         self.add_widget(button)
+                    else:
+                        values = (
+                            self.board[y][x], # text
+                            size[0]/2, # font_size
+                            (x*pos, y*pos), # pos
+                            size, # size
+                        )
+                        print(self.pieces[y][x])
+                        self.pieces[y][x].text, self.pieces[y][x].font_size, self.pieces[y][x].pos, self.pieces[y][x].size = values
 
     def on_size(self, *args): # this func gets called when screen size changes (i think)
-        self.canvas.clear()
         screen_size = min(args[1])
         print(screen_size)
-        size = (screen_size * 0.1, screen_size * 0.1)
-        pos_mult = screen_size/12
+        size = (screen_size * 0.125, screen_size * 0.125)
+        pos_mult = screen_size/8
         self.draw_board(size, pos_mult)
         self.draw_pieces(size, pos_mult)
 
-    def on_touch_down(self, touch):
-        x, y = touch.pos
-        if self.collide_point(x, y):
-            # Compute square coordinates from touch position
-            col = int(x // 50)
-            row = int(y // 50)
-            # Convert coordinates to algebraic notation (e.g. "e2")
-            file = chr(col + ord('a'))
-            rank = str(row + 1)
-            square = file + rank
-            print(square)
-            valid_moves = self.game.get_valid_moves(square)
-            print(valid_moves)
+    def click(self, btn: str):
+        if btn.text == "  ": return
+        index = None
+        print(self.pieces[0][0].text)
+        for y, row in enumerate(self.pieces):
+            for x, col in enumerate(row):
+                if col == btn:
+                    index = f"{x}{y}"
+                    print(index)
+                    break
+            if index is not None: break
+        square = self.game.index_to_coords(index)
+        print(square)
+        valid_moves = self.game.get_valid_moves(square)
+        print(valid_moves)
 
 
 class ChessApp(App):
@@ -524,4 +556,5 @@ Bugs:
     - Check if player can castle into check (low chance)
     - Fix player being able to castle out of check
     - Fix player being able to castle the rook into check
+- white and black pos are swapped :/
 """
