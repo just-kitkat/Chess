@@ -456,12 +456,12 @@ class Chessboard(Widget):
                         valign="middle",
                         color=(0, 0, 0, 1)
                         )
-                    self.coords["y"][i] = label
+                    self.coords["y"][j] = label
                     self.add_widget(label)
                 else:
-                    self.coords["y"][i].font_size = coord_size[0]
-                    self.coords["y"][i].pos = (0, j*pos+size[1]/1.5)
-                    self.coords["y"][i].size = coord_size
+                    self.coords["y"][j].font_size = coord_size[0]
+                    self.coords["y"][j].pos = (0, j*pos+size[1]/1.5)
+                    self.coords["y"][j].size = coord_size
 
             # Draw column indices
             for i, col in enumerate("abcdefgh"):
