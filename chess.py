@@ -436,6 +436,21 @@ class Chessboard(Widget):
         self.game = game
         self.board = game.board
         self.selected = ""
+        self.piece_map = {
+            "WK": "\u2654",
+            "WQ": "\u2655",
+            "WR": "\u2656",
+            "WB": "\u2657",
+            "WN": "\u2658",
+            "WP": "\u2659",
+            "BK": "\u265A",
+            "BQ": "\u265B",
+            "BR": "\u265C",
+            "BB": "\u265D",
+            "BN": "\u265E",
+            "BP": "\u265F",
+            "  ": "  "
+        }
         self.valid_moves = []
         self.pieces = deepcopy(self.board)
         self.squares = deepcopy(self.board) # to store pos of board squares
@@ -508,8 +523,9 @@ class Chessboard(Widget):
                 for x, col in enumerate(row):
                     if self.pieces[y][x] == col: # check if pieces store board or btns. if board, it means it hasnt been modified yet
                         button = Button(
-                            text=self.board[y][x],
-                            font_size=size[0]/2,
+                            text=self.piece_map[self.board[y][x]],
+                            font_name="DejaVuSans",
+                            font_size=size[0]/1.5,
                             pos=(x*pos, (7-y)*pos), # display fix
                             size=size,
                             halign="center",
@@ -522,8 +538,8 @@ class Chessboard(Widget):
                         self.add_widget(button)
                     else:
                         values = (
-                            self.board[y][x], # text
-                            size[0]/2, # font_size
+                            self.piece_map[self.board[y][x]], # text
+                            size[0]/1.5, # font_size
                             (x*pos, (7-y)*pos), # pos
                             size, # size
                         )
