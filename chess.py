@@ -644,8 +644,11 @@ To-Do:
     - disabled for now so it is easier to test stuff!
 - Pawn promotion
 
-Bugs:
-- Castling:
-    - Fix player being able to castle out of check
-    - Fix player being able to castle the rook into check
+Verified Bugs:
+    - Castling:
+        - Fix player being able to castle out of check
+        - Fix player being able to castle the rook into check
+
+Unverified Bugs:
+    - Stalemate counts as a win as opponent has 0 legal moves
 """
