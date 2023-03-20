@@ -20,12 +20,28 @@ from typing import Literal, List, Optional
 from copy import deepcopy # Used for board copying operations (nested list)
 import os # used to clear console after a chess board change
 import time
+import sys
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.graphics import Rectangle, Color
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.core.window import Window
+
+def resource_path(relative_path):
+    """
+    PyInstaller creates a temp folder and stores path in _MEIPASS
+    This function tries to find that path 
+
+    Note: This function is for EXEs. Feel free to remove it when compiling it to APKs.
+    """
+
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class InvalidMove(Exception):
     pass
@@ -432,18 +448,18 @@ class Chessboard(Widget):
         coord_size = size[0]/4, size[1]/4
         with self.canvas:
             # Draw board squares
-            for i in range(8):
-                for j in range(8):
-                    if (i + j) % 2 == 0:
+            for y in range(8):
+                for x in range(8):
+                    if (x + y) % 2 == 0:
                         Color(0.98, 0.98, 0.88, 1)  # light square
                     else:
                         Color(0.5, 0.7, 0.4, 1)  # dark square
-                    if self.squares[i][j] == self.board[i][j]:
-                        rect = Rectangle(pos=(i*pos, j*pos), size=size)
-                        self.squares[i][j] = rect
+                    if self.squares[y][x] == self.board[y][x]:
+                        rect = Rectangle(pos=(x*pos, y*pos), size=size)
+                        self.squares[y][x] = rect
                     else:
-                        self.squares[i][j].pos = (i*pos, j*pos)
-                        self.squares[i][j].size = size
+                        self.squares[y][x].pos = (x*pos, y*pos)
+                        self.squares[y][x].size = size
 
             # Draw row indices
             for j in range(8):
@@ -540,11 +556,14 @@ class Chessboard(Widget):
         if btn.text != "  ": 
             valid_moves = self.game.get_valid_moves(square)
             valid_moves = [self.game.index_to_coords(ind) for ind in valid_moves]
+
         if self.selected == "" and btn.text != "  ":
             self.selected = square
             self.valid_moves = valid_moves
+
         elif btn.text == "  " and self.selected == "":
             pass
+
         else:
             if square in self.valid_moves:
                 try:
@@ -552,11 +571,19 @@ class Chessboard(Widget):
                 except InvalidMove:
                     pass
                 self.on_size()
-                self.selected = ""
-                print("hi")
-            else:
-                self.selected = ""
-                self.valid_moves = [] # Not needed but for clarity
+
+            self.selected = ""
+            self.valid_moves = []
+        
+        valids = [self.game.coords_to_index(i) for i in self.valid_moves]
+        print("valids", valids)
+        for y, row in enumerate(self.squares):
+            for x, col in enumerate(row):
+                if [x, y] in valids:
+                    self.squares[7-y][x].source = resource_path(f"assets/move_indicator.jpg")
+                else:
+                    self.squares[7-y][x].source = None
+
         print(square)
         print(valid_moves)
         print("selected:", self.selected)
