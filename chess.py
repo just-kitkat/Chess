@@ -573,7 +573,7 @@ class Chessboard(Widget):
             valid_moves = self.game.get_valid_moves(square)
             valid_moves = [self.game.index_to_coords(ind) for ind in valid_moves]
 
-        if self.selected == "" and btn.text != "  ":
+        if btn.text != "  " and square not in self.valid_moves:
             self.selected = square
             self.valid_moves = valid_moves
 
