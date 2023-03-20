@@ -27,6 +27,8 @@ from kivy.graphics import Rectangle, Color
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.core.window import Window
+from kivy.uix.popup import Popup
+from kivy.uix.boxlayout import BoxLayout
 
 def resource_path(relative_path):
     """
@@ -375,10 +377,8 @@ class Game:
                             has_valid_moves = True
                             break
                 if not has_valid_moves:
-                    winner = "W" if color == "B" else "B"
-                    print(self.display())
-                    print(f"Checkmate!!! {winner} won!")
-                    exit()
+                    winner = "White" if color == "B" else "Black"
+                    return winner
             return True
         print("Piece moved!")
         self.warning = "That was an invalid move!"
@@ -583,7 +583,30 @@ class Chessboard(Widget):
         else:
             if square in self.valid_moves:
                 try:
-                    self.game.move(self.selected, square)
+                    movement = self.game.move(self.selected, square) # returns color if there is a winner
+
+                    if movement in ("White", "Black"):
+                        winner = movement
+                        print(f"Checkmate!!! {winner} won!")
+
+                        content = BoxLayout(orientation="vertical")
+
+                        close_popup = Button(text="Close")
+                        win_msg = Label(text=f"{winner} won by checkmate!")
+
+                        content.add_widget(win_msg)
+                        content.add_widget(close_popup)
+
+                        winner_popup = Popup(
+                            title=f"{winner} wins",
+                            title_align="center",
+                            title_size=Window.size[0]*0.05,
+                            content=content,
+                            size_hint=(0.7, 0.5)
+                        )
+                        close_popup.bind(on_press=winner_popup.dismiss)
+                        winner_popup.open()
+
                 except InvalidMove:
                     pass
                 self.on_size()
