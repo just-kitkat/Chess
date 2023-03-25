@@ -16,53 +16,33 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Literal, List, Optional
+import sys # For executable (_MEIPASS)
 from copy import deepcopy # Used for board copying operations (nested list)
-import os # used to clear console after a chess board change
-import time
-import sys
+from typing import Literal, List, Optional
 from kivy.app import App
-from kivy.uix.widget import Widget
+from kivy.lang import Builder
+from kivy.core.window import Window
 from kivy.graphics import Rectangle, Color
+from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.button import Button
-from kivy.core.window import Window
-from kivy.uix.popup import Popup
+from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import Screen, ScreenManager
-from kivy.lang import Builder
-
-def resource_path(relative_path):
-    """
-    PyInstaller creates a temp folder and stores path in _MEIPASS
-    This function tries to find that path 
-
-    Note: This function is for EXEs. Feel free to remove it when compiling it to APKs.
-    """
-
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
-
-class WindowManager(ScreenManager):
-    pass
-
-class WelcomeWindow(Screen):
-    pass
-
-class GameWindow(Screen):
-    def on_enter(self):
-        game = Game()
-        chessgame = Chessboard(game)
-        self.add_widget(chessgame)
 
 class InvalidMove(Exception):
     pass
 
+class KingMissing(Exception)
+
+"""
+Chess Game Logic
+"""
+
 class Game:
+    """
+    This class consists of the chess game logic.
+    """
     def __init__(self):
         self.board = [
             ["BR", "BN", "BB", "BQ", "BK", "BB", "BN", "BR"],
@@ -73,17 +53,6 @@ class Game:
             ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
             ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
             ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"],
-        ]
-        # modified for testing
-        self.board1 = [
-            ["BR", "  ", "  ", "  ", "BK", "  ", "  ", "BR"],
-            ["BP", "BP", "BP", "BP", "BQ", "BP", "BP", "BP"],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["WP", "WP", "WP", "WP", "  ", "WP", "WP", "WP"],
-            ["WR", "  ", "  ", "WP", "WK", "WP", "  ", "WR"],
         ]
         self.turn = "white"
         self.moves = 0
@@ -113,11 +82,16 @@ class Game:
         return [self.letter_match[x], 8 - int(y)] if to_return == "int" else f"{self.letter_match[x]}{8 - int(y)}"
 
     def index_to_coords(self, index: str):
+        """
+        This function converts board indicies to coordinate form! 
+        E.g. "00" -> "a8"
+        """
         return f"{chr(int(index[0])+97)}{8 - int(index[1])}"
 
     def get_king_coords(self, color: str, board: Optional[List[list]]=None):
         """
         This function gets the coods of the king
+        Returns "0" if king cannot be found
         """
         if board is None:
             board = self.board
@@ -125,6 +99,7 @@ class Game:
             for x in range(8):
                 if board[y][x] == f"{color}K":
                     return self.index_to_coords(f"{x}{y}")
+        raise KingMissing("The king cannot be found on the board!")
 
     def find_pawn_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int) -> List[str]:
         # Find valid pawn movements
@@ -398,50 +373,36 @@ class Game:
         self.warning = "That was an invalid move!"
         raise InvalidMove("Invalid Move!")
 
-    def display(self):
-        """
-        This function displays the chess board
-        """
-        # Clear the console
-        #os.system("clear")
+"""
+Game GUI code below!
+"""
 
-        # Draw the board
-        res = "  " + "-"*41 + "\n"
-        for y, row in enumerate(self.board):
-            res += f"{8 - y} |"
-            for x in self.board[y]:
-                res += f" {x} |"
-            res += f"\n   {'-'*40} \n"
+def resource_path(relative_path):
+    """
+    PyInstaller creates a temp folder and stores path in _MEIPASS
+    This function tries to find that path 
 
-        letters = ["a", "b", "c", "d", "e", "f", "g", "h"]
+    Note: This function is for EXEs. Feel free to remove it when compiling it to APKs.
+    """
 
-        res += "  "
-        for letter in letters:
-            res += f"   {letter} "
-        res += f"\n{self.warning}"
-        return res
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
 
-def main():
-    game = Game()
+    return os.path.join(base_path, relative_path)
 
-    # Game Loop
-    running = True
-    while running:
-        print(game.display())
+class WindowManager(ScreenManager):
+    pass
 
-        try:
-            old, new = input("Enter piece to move: "), input("Enter coords to move to: ")
-            letters = [chr(i) for i in range(97, 105)]
-            numbers = [str(i) for  i in range(1, 9)]
-            # Check if coord is not malformed
-            if len(old) == len(new) == 2 and (old[0] in letters and new[0] in letters and old[1] in numbers and new[1] in numbers):
-                game.move(old, new)
-            else:
-                print("Invalid Coords provided")
-        except InvalidMove:
-            print("Sorry, that was an invalid move!") # doesnt show for now as game.display clears the console
+class WelcomeWindow(Screen):
+    pass
 
-    time.sleep(20)
+class GameWindow(Screen):
+    def on_enter(self):
+        game = Game()
+        chessgame = Chessboard(game)
+        self.add_widget(chessgame)
 
 
 class Chessboard(Widget):
@@ -649,7 +610,7 @@ class ChessApp(App):
         return kv
 
 if __name__ == '__main__':
-    ChessApp().run()
+    appinstance = ChessApp().run()
 
 """
 To-Do:
