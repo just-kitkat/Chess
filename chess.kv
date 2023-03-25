@@ -1,0 +1,52 @@
+#:kivy 2.1.0
+
+#Chess!
+#Copyright (C) 2023  kitkat3141
+
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+WindowManager:
+    WelcomeWindow:
+    GameWindow:
+
+<DefButton@Button>: # DefaultButton!
+    #on_release: app.play_btn_sound()
+
+<WelcomeWindow>:
+    name: "WelcomeWindow"
+
+    Label:
+        font_size: root.width//10
+        size_hint: 0.3, 0.2
+        pos_hint: {"center_x": 0.5, "top": 0.9}
+        text: "Chess"
+    
+    Label:
+        font_size: root.width//25
+        size_hint: 0.2, 0.1
+        pos_hint: {"center_x": 0.5, "top": 0.65}
+        text: "By kitkat3141"
+
+    DefButton:
+        size_hint: 0.35, 0.2
+        font_size: root.width//20
+        pos_hint: {"center_x": 0.5, "center_y": 0.4}
+        text: "Play"
+        on_release:
+            app.root.current = "GameWindow"
+            root.manager.transition.direction = "left"
+            #root.init_game()
+
+<GameWindow>:
+    name: "GameWindow"

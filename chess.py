@@ -29,6 +29,8 @@ from kivy.uix.button import Button
 from kivy.core.window import Window
 from kivy.uix.popup import Popup
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.lang import Builder
 
 def resource_path(relative_path):
     """
@@ -44,6 +46,18 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
+
+class WindowManager(ScreenManager):
+    pass
+
+class WelcomeWindow(Screen):
+    pass
+
+class GameWindow(Screen):
+    def on_enter(self):
+        game = Game()
+        chessgame = Chessboard(game)
+        self.add_widget(chessgame)
 
 class InvalidMove(Exception):
     pass
@@ -630,9 +644,9 @@ class Chessboard(Widget):
 
 class ChessApp(App):
     def build(self):
-        game = Game()
-        chessgame = Chessboard(game)
-        return chessgame
+        self.use_kivy_settings = False # to be used in the future!
+        kv = Builder.load_file(resource_path("chess.kv"))
+        return kv
 
 if __name__ == '__main__':
     ChessApp().run()
