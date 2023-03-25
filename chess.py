@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os  # For executable (_MEIPASS)
 import sys # For executable (_MEIPASS)
 from copy import deepcopy # Used for board copying operations (nested list)
 from typing import Literal, List, Optional
@@ -33,7 +34,8 @@ from kivy.uix.screenmanager import Screen, ScreenManager
 class InvalidMove(Exception):
     pass
 
-class KingMissing(Exception)
+class KingMissing(Exception):
+    pass
 
 """
 Chess Game Logic
