@@ -30,17 +30,18 @@ WindowManager:
         font_size: root.width//10
         size_hint: 0.3, 0.2
         pos_hint: {"center_x": 0.5, "top": 0.9}
+        halign: "center"
         text: "Chess"
     
     Label:
-        font_size: root.width//25
+        font_size: root.width//40
         size_hint: 0.2, 0.1
-        pos_hint: {"center_x": 0.5, "top": 0.65}
+        pos_hint: {"center_x": 0.5, "top": 0.7}
         text: "By kitkat3141"
 
     DefButton:
         size_hint: 0.35, 0.2
-        font_size: root.width//20
+        font_size: root.width//20 if root.width > root.height else root.height//20
         pos_hint: {"center_x": 0.5, "center_y": 0.4}
         text: "Play"
         on_release:
