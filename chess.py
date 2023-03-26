@@ -301,10 +301,10 @@ class Game:
                 castling = self.castle_status[color]
                 num = 7 if color == "W" else 0 # row coord
                 # King's side castling (O-O)
-                if castling[0] and all(self.board[num][i] == "  " for i in range(5, 7)):
+                if not self.is_in_check(color, 5, num) and castling[0] and all(self.board[num][i] == "  " for i in range(5, 7)):
                     valid_moves.append(f"6{num} O-O")
                 # Queen's side castling (O-O-O)
-                if castling[1] and all(self.board[num][i] == "  " for i in range(1, 4)):
+                if not self.is_in_check(color, 3, num) and castling[1] and all(self.board[num][i] == "  " for i in range(1, 4)):
                     valid_moves.append(f"2{num} O-O-O")
 
         # Check if king is in check.
@@ -634,8 +634,7 @@ To-Do:
 - Pawn promotion
 
 Verified Bugs:
-    - Castling:
-        - Fix player being able to castle the rook into check
+-
 
 Unverified Bugs:
     - Stalemate counts as a win as opponent has 0 legal moves
