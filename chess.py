@@ -21,7 +21,9 @@ import sys # For executable (_MEIPASS)
 from copy import deepcopy # Used for board copying operations (nested list)
 from typing import Literal, List, Optional
 from kivy.app import App
+from kivymd.app import MDApp
 from kivy.lang import Builder
+from kivy.factory import Factory as Fac
 from kivy.core.window import Window
 from kivy.graphics import Rectangle, Color
 from kivy.uix.popup import Popup
@@ -400,6 +402,7 @@ class WindowManager(ScreenManager):
 class WelcomeWindow(Screen):
     pass
 
+
 class GameWindow(Screen):
     def on_enter(self):
         game = Game()
@@ -605,12 +608,13 @@ class Chessboard(Widget):
         print("selected:", self.selected)
 
 
-class ChessApp(App):
+class ChessApp(MDApp):
     def build(self):
         self.use_kivy_settings = False # to be used in the future!
+        self.theme_cls.theme_style = "Dark"
         kv = Builder.load_file(resource_path("chess.kv"))
         return kv
-
+    
 if __name__ == '__main__':
     appinstance = ChessApp().run()
 
