@@ -132,7 +132,7 @@ class Game:
             if 0 <= new_x < 8:
                 if self.board[new_y][new_x][0] == ("W" if color == "B" else "B"):
                     ret.append(f"{new_x}{new_y}")
-                    if return_check:
+                    if return_check and self.board[new_y][new_x][1] == "P":
                         return True
 
         return ret if not return_check else False
