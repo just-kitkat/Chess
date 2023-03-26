@@ -105,23 +105,24 @@ class Game:
                     return self.index_to_coords(f"{x}{y}")
         raise KingMissing("The king cannot be found on the board!")
 
-    def find_pawn_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int) -> List[str]:
+    def find_pawn_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int, return_check: bool=False) -> List[str]:
         # Find valid pawn movements
         ret = []
-        ## Find valid vert movements (1/ 2 up for first move)
-        can_move_vertically = False
-        # Single vert moves
-        new_x, new_y = (piece_x, piece_y+1) if color == "B" else (piece_x, piece_y-1)
-        if self.board[new_y][new_x] == "  " and piece_x == new_x:
-            can_move_vertically = True
-            ret.append(f"{new_x}{new_y}")
-
-        # Double vert moves
-        # First, check if the pawn is on it's home square
-        if can_move_vertically and ((piece_y == 1 and color == "B") or (piece_y == 6 and color == "W")):
-            new_x, new_y = (piece_x, piece_y+2) if color == "B" else (piece_x, piece_y-2)
+        if not return_check: # if return_check, only check for takes 
+            ## Find valid vert movements (1/ 2 up for first move)
+            can_move_vertically = False
+            # Single vert moves
+            new_x, new_y = (piece_x, piece_y+1) if color == "B" else (piece_x, piece_y-1)
             if self.board[new_y][new_x] == "  " and piece_x == new_x:
+                can_move_vertically = True
                 ret.append(f"{new_x}{new_y}")
+
+            # Double vert moves
+            # First, check if the pawn is on it's home square
+            if can_move_vertically and ((piece_y == 1 and color == "B") or (piece_y == 6 and color == "W")):
+                new_x, new_y = (piece_x, piece_y+2) if color == "B" else (piece_x, piece_y-2)
+                if self.board[new_y][new_x] == "  " and piece_x == new_x:
+                    ret.append(f"{new_x}{new_y}")
 
         # Check for diagonal movement
         new_y = piece_y+1 if color == "B" else piece_y-1
@@ -131,8 +132,10 @@ class Game:
             if 0 <= new_x < 8:
                 if self.board[new_y][new_x][0] == ("W" if color == "B" else "B"):
                     ret.append(f"{new_x}{new_y}")
+                    if return_check:
+                        return True
 
-        return ret
+        return ret if not return_check else False
 
     def find_horizontal_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int, return_check: bool=False) -> List[str] | bool:
         ret = []
@@ -212,11 +215,11 @@ class Game:
                     if self.board[piece_y+mody][piece_x+modx][0] != color:
                         ret.append(f"{piece_x+modx}{piece_y+mody}")
                         if return_check and self.board[piece_y+mody][piece_x+modx][1] == "N":
-                                return True
+                            return True
 
         return ret if not return_check else False
 
-    def find_adj_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int) -> List[str]:
+    def find_adj_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int, return_check: bool=False) -> List[str]:
         ret = []
         for mody in (-1, 0, 1):
             for modx in (-1, 0, 1):
@@ -224,8 +227,10 @@ class Game:
                 if 0 <= piece_x+modx < 8 and 0 <= piece_y+mody < 8:
                     if self.board[piece_y+mody][piece_x+modx][0] != color:
                         ret.append(f"{piece_x+modx}{piece_y+mody}")
+                        if return_check and self.board[piece_y+mody][piece_x+modx][1] == "K":
+                            return True
 
-        return ret
+        return ret if not return_check else False
 
     def is_in_check(self, color: Literal["W", "B"], piece_x: int, piece_y: int, temp_board: Optional[List[list]]=None) -> bool:
         """
@@ -242,6 +247,8 @@ class Game:
         in_check.append(self.find_vertical_moves(color, piece_x, piece_y, True))
         in_check.append(self.find_diagonal_moves(color, piece_x, piece_y, True))
         in_check.append(self.find_knight_moves(color, piece_x, piece_y, True))
+        in_check.append(self.find_adj_moves(color, piece_x, piece_y, True))
+        in_check.append(self.find_pawn_moves(color, piece_x, piece_y, True))
         self.board = original_board
         return True if True in in_check else False
 
