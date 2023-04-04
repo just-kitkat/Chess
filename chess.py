@@ -16,14 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os  # For executable (_MEIPASS)
-import sys # For executable (_MEIPASS)
+import os   # For executable (_MEIPASS)
+import sys  # For executable (_MEIPASS)
+import trio # For async code
 from copy import deepcopy # Used for board copying operations (nested list)
 from typing import Literal, List, Optional
-from kivy.app import App
 from kivymd.app import MDApp
 from kivy.lang import Builder
-from kivy.factory import Factory as Fac
 from kivy.core.window import Window
 from kivy.graphics import Rectangle, Color
 from kivy.uix.popup import Popup
@@ -32,6 +31,9 @@ from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.modalview import ModalView
+from kivy.uix.gridlayout import GridLayout
+from kivymd.uix.button import MDFlatButton
 
 class InvalidMove(Exception):
     pass
@@ -62,6 +64,9 @@ class Game:
         self.moves = 0
         self.winner = None
         self.warning = ""
+        self.pawn_promotion_view = None
+        self.wait_for_promotion = trio.Event()
+        self.pawn_promoted_to = None
         self.castle_status = {
             "W": [True, True], # O-O, O-O-O
             "B": [True, True]
@@ -75,6 +80,17 @@ class Game:
             "f": 5,
             "g": 6,
             "h": 7
+        }
+        self.pieces = {
+            "WQ": "\u2655",
+            "WR": "\u2656",
+            "WB": "\u2657",
+            "WN": "\u2658",
+
+            "BQ": "\u265B",
+            "BR": "\u265C",
+            "BB": "\u265D",
+            "BN": "\u265E",
         }
 
     def coords_to_index(self, coords: str, to_return: Literal["int", "str"]="int") -> str | list:
@@ -260,7 +276,6 @@ class Game:
         piece = self.board[piece_y][piece_x]
         color = piece[0]
         valid_moves = []
-        print(piece, self.board)
 
         if piece[0] not in ("W", "B"):
             raise InvalidMove
@@ -320,15 +335,41 @@ class Game:
 
         print("Valid Moves:", [self.index_to_coords(i) for i in valid_moves])
         return valid_moves
+    
+    def select_piece(self, button):
+        self.pawn_promotion_view.dismiss()
+        self.pawn_promoted_to = list(self.pieces)[list(self.pieces.values()).index(button.text)]
+        self.wait_for_promotion.set()
 
-    def move(self, curr_pos: str, new_pos: str) -> None:
+    def prompt_for_promotion(self, color: Literal["W", "B"]) -> Literal["Q", "R", "B", "N"] | None:
+        """
+        Open a ModalView to prompt for pawn promotion piece choice
+        """
+        print("Prompting for pawn promotion!")
+        if not self.pawn_promotion_view:
+            box = GridLayout(rows=4, cols=1)
+            box.add_widget(MDFlatButton(text=self.pieces["WQ"], on_release=self.select_piece))
+            box.add_widget(MDFlatButton(text=self.pieces["WR"], on_release=self.select_piece))
+            box.add_widget(MDFlatButton(text=self.pieces["WB"], on_release=self.select_piece))
+            box.add_widget(MDFlatButton(text=self.pieces["WN"], on_release=self.select_piece))
+            self.pawn_promotion_view = ModalView(
+                size_hint=(None, None),
+                size=(75, 310),
+                background_color=(255, 255, 255, 1),
+                overlay_color=(0, 0, 0, 0.4),
+                padding=5
+                )
+            self.pawn_promotion_view.add_widget(box)
+        self.pawn_promotion_view.open()
+
+    async def move(self, curr_pos: str, new_pos: str) -> None:
         """
         This function helps move a piece on the board
 
         curr_pos: the current position of the piece
         new_pos: the new position of the piece
         """
-
+        self.pawn_promotion = False
         # Get the piece type based on curr_pos (WR, WN, BP, etc)
         # Get x and y pos of pieces
         piece_x, piece_y = self.coords_to_index(curr_pos)
@@ -356,6 +397,22 @@ class Game:
                     self.castle_status[color][0] = False
             if piece_type[1] == "K":
                 self.castle_status[piece_type[0]] = [False, False]
+            # Check for pawn promotion
+            num = 0 if color == "W" else 7
+            print(num, new_y)
+            if piece_type[1] == "P" and new_y == num:
+                self.pawn_promotion = True
+                
+            self.args_to_pass = piece_x, piece_y, new_x, new_y, piece_type, pos, castling_moves, color
+            if self.pawn_promotion:
+                self.pawn_promoted_to = None
+                self.wait_for_promotion = trio.Event()
+                self.prompt_for_promotion(color)
+                await self.wait_for_promotion.wait()
+            
+            # Check pawn promotion
+            if self.pawn_promoted_to is not None:
+                piece_type = self.pawn_promoted_to
 
             # Move piece
             self.board[piece_y][piece_x] = "  "
@@ -381,9 +438,8 @@ class Game:
                     winner = "White" if color == "B" else "Black"
                     return winner
             return True
-        print("Piece moved!")
-        self.warning = "That was an invalid move!"
-        raise InvalidMove("Invalid Move!")
+    
+
 
 """
 Game GUI code below!
@@ -424,6 +480,7 @@ class Chessboard(Widget):
         self.game = game
         self.board = game.board
         self.selected = ""
+        self.pawn_promotion_view = None
         self.piece_map = {
             "WK": "\u2654",
             "WQ": "\u2655",
@@ -531,7 +588,6 @@ class Chessboard(Widget):
                             (x*pos, (7-y)*pos), # pos
                             size, # size
                         )
-                        print(self.pieces[y][x])
                         self.pieces[y][x].text, self.pieces[y][x].font_size, self.pieces[y][x].pos, self.pieces[y][x].size = values
 
     def on_size(self, *args): # this func gets called when screen size changes (i think)
@@ -539,7 +595,6 @@ class Chessboard(Widget):
             screen_size = min(args[1])
         else:
             screen_size = min(Window.size)
-        print(screen_size)
         size = (screen_size * 0.125, screen_size * 0.125)
         pos_mult = screen_size/8
         self.board = self.game.board
@@ -547,12 +602,21 @@ class Chessboard(Widget):
         self.draw_pieces(size, pos_mult)
 
     def click(self, btn: str):
+        """
+        This event gets called when piece is selected.
+        This will start a trio task to enable async behaviour!
+        """
+        inst.nursery.start_soon(self.async_click, btn)
+        
+    async def async_click(self, btn: str):
+        """
+        Handles piece selection
+        """
         index = None
         for y, row in enumerate(self.pieces):
             for x, col in enumerate(row):
                 if col == btn:
                     index = f"{x}{y}"
-                    print(index)
                     break
             if index is not None: break
         square = self.game.index_to_coords(index)
@@ -571,8 +635,8 @@ class Chessboard(Widget):
         else:
             if square in self.valid_moves:
                 try:
-                    movement = self.game.move(self.selected, square) # returns color if there is a winner
-
+                    movement = await self.game.move(self.selected, square) # returns color if there is a winner
+                    print("movement:", movement)
                     if movement in ("White", "Black"):
                         winner = movement
                         print(f"Checkmate!!! {winner} won!")
@@ -603,7 +667,6 @@ class Chessboard(Widget):
             self.valid_moves = []
         
         valids = [self.game.coords_to_index(i) for i in self.valid_moves]
-        print("valids", valids)
         for y, row in enumerate(self.squares):
             for x, col in enumerate(row):
                 if [x, y] in valids:
@@ -611,31 +674,41 @@ class Chessboard(Widget):
                 else:
                     self.squares[7-y][x].source = None
 
-        print(square)
-        print(valid_moves)
-        print("selected:", self.selected)
-
 
 class ChessApp(MDApp):
+    def __init__(self, nursery):
+        super().__init__()
+        self.nursery = nursery
+
     def build(self):
         self.use_kivy_settings = False # to be used in the future!
         self.theme_cls.theme_style = "Dark"
         kv = Builder.load_file(resource_path("chess.kv"))
         return kv
     
+inst = None
+async def main():
+    global inst
+    async with trio.open_nursery() as nursery:
+        inst = ChessApp(nursery)
+        await inst.async_run(async_lib="trio") # start app!
+        nursery.cancel_scope.cancel()
+    
 if __name__ == '__main__':
-    appinstance = ChessApp().run()
+    trio.run(main)
 
 """
 To-Do:
 - En Passant
 - Switch between black and white moves
     - disabled for now so it is easier to test stuff!
-- Pawn promotion
+- Add stalemate. (game currently just does not allow the player to move)
+- Make move indicator smaller
+- If piece can be taken, change move indicator shape to a grey square with transparent circle in the center
 
 Verified Bugs:
--
+- King can castle without the rook(rook taken without moving) .-.
 
 Unverified Bugs:
-    - Stalemate counts as a win as opponent has 0 legal moves
+- 
 """
