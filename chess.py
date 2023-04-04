@@ -316,10 +316,10 @@ class Game:
                 castling = self.castle_status[color]
                 num = 7 if color == "W" else 0 # row coord
                 # King's side castling (O-O)
-                if not self.is_in_check(color, 5, num) and castling[0] and all(self.board[num][i] == "  " for i in range(5, 7)):
+                if not self.is_in_check(color, 5, num) and castling[0] and all(self.board[num][i] == "  " for i in range(5, 7)) and self.board[num][7] == f"{color}R":
                     valid_moves.append(f"6{num} O-O")
                 # Queen's side castling (O-O-O)
-                if not self.is_in_check(color, 3, num) and castling[1] and all(self.board[num][i] == "  " for i in range(1, 4)):
+                if not self.is_in_check(color, 3, num) and castling[1] and all(self.board[num][i] == "  " for i in range(1, 4)) and self.board[num][0] == f"{color}R":
                     valid_moves.append(f"2{num} O-O-O")
 
         # Check if king is in check.
@@ -707,8 +707,9 @@ To-Do:
 - If piece can be taken, change move indicator shape to a grey square with transparent circle in the center
 
 Verified Bugs:
-- King can castle without the rook(rook taken without moving) .-.
+- 
 
 Unverified Bugs:
 - 
+
 """
