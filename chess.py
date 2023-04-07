@@ -712,7 +712,9 @@ To-Do:
 - If piece can be taken, change move indicator shape to a grey square with transparent circle in the center
 
 Verified Bugs:
-- 
+- Game crashes when window becomes too big
+    - Due to font size being to large (not sure why this happens)
+    - Maybe put a cap on max font size?
 
 Unverified Bugs:
 -
