@@ -575,7 +575,7 @@ class Chessboard(Widget):
                         button = Button(
                             text=self.piece_map[self.board[y][x]],
                             font_name="DejaVuSans",
-                            font_size=size[0]/1.5,
+                            font_size=size[0]/1.5 if size[0]/1.5 <= 60 else 60,
                             pos=(x*pos, (7-y)*pos), # display fix
                             size=size,
                             halign="center",
@@ -589,7 +589,7 @@ class Chessboard(Widget):
                     else:
                         values = (
                             self.piece_map[self.board[y][x]], # text
-                            size[0]/1.5, # font_size
+                            size[0]/1.5 if size[0]/1.5 <= 60 else 60, # font_size
                             (x*pos, (7-y)*pos), # pos
                             size, # size
                         )
@@ -712,9 +712,7 @@ To-Do:
 - If piece can be taken, change move indicator shape to a grey square with transparent circle in the center
 
 Verified Bugs:
-- Game crashes when window becomes too big
-    - Due to font size being to large (not sure why this happens)
-    - Maybe put a cap on max font size?
+- 
 
 Unverified Bugs:
 -
