@@ -35,11 +35,16 @@ from kivy.uix.modalview import ModalView
 from kivy.uix.gridlayout import GridLayout
 from kivymd.uix.button import MDFlatButton
 
+"""
+Error Classes
+"""
+
 class InvalidMove(Exception):
     pass
 
 class KingMissing(Exception):
     pass
+
 
 """
 Chess Game Logic
@@ -710,6 +715,6 @@ Verified Bugs:
 - 
 
 Unverified Bugs:
-- 
+-
 
 """
