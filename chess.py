@@ -16,6 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# Remove red dots when user right clicks
+from kivy.config import Config
+Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+
 import os   # For executable (_MEIPASS)
 import sys  # For executable (_MEIPASS)
 import trio # For async code
