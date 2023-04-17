@@ -600,6 +600,12 @@ class Chessboard(Widget):
                         self.pieces[y][x].text, self.pieces[y][x].font_size, self.pieces[y][x].pos, self.pieces[y][x].size = values
 
     def on_size(self, *args): # this func gets called when screen size changes (i think)
+        """
+        Whenever the screen size is changed or the board needs updating,
+        this function gets called.
+
+        Handles screen updates
+        """
         if args != ():
             screen_size = min(args[1])
         else:
