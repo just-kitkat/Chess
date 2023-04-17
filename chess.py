@@ -714,6 +714,7 @@ To-Do:
 - Add stalemate. (game currently just does not allow the player to move)
 - Make move indicator smaller
 - If piece can be taken, change move indicator shape to a grey square with transparent circle in the center
+- Make board centered on screen
 
 Verified Bugs:
 - 
