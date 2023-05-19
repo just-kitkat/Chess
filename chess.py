@@ -525,8 +525,8 @@ class Chessboard(Widget):
                         Color(0.5, 0.7, 0.4, 1)  # dark square
                     
                     final_pos = (
-                        x*pos + Window.size[0]//2 - size[0]*4,
-                        y*pos + Window.size[1]//2 - size[1]*4
+                        x*pos + self.width//2 - size[0]*4,
+                        y*pos + self.height//2 - size[1]*4
                         )
                     if self.squares[y][x] == self.board[y][x]:
                         rect = Rectangle(pos=final_pos, size=size)
@@ -538,8 +538,8 @@ class Chessboard(Widget):
             # Draw row indices
             for j in range(8):
                 final_pos = (
-                    Window.size[0]/2-size[0]*4,
-                    j*pos+size[1]/1.5+Window.size[1]/2-size[1]*4
+                    self.width/2-size[0]*4,
+                    j*pos+size[1]/1.5+self.height/2-size[1]*4
                     )
                 if self.coords["y"][7] == 8:
                     label = Label(
@@ -561,8 +561,8 @@ class Chessboard(Widget):
             # Draw column indices
             for i, col in enumerate("abcdefgh"):
                 final_pos = (
-                    i*pos+size[0]/1.33+Window.size[0]/2-size[0]*4,
-                    Window.size[1]/2-size[1]*4
+                    i*pos+size[0]/1.33+self.width/2-size[0]*4,
+                    self.height/2-size[1]*4
                     )
                 if self.coords["x"][-1] == "h":
                     label = Label(
@@ -589,8 +589,8 @@ class Chessboard(Widget):
             for y, row in enumerate(self.board):
                 for x, col in enumerate(row):
                     final_pos = (
-                        x*pos + Window.size[0]//2 - size[0]*4,
-                        (7-y)*pos + Window.size[1]//2 - size[1]*4
+                        x*pos + self.width//2 - size[0]*4,
+                        (7-y)*pos + self.height//2 - size[1]*4
                         )
                     if self.pieces[y][x] == col: # check if pieces store board or btns. if board, it means it hasnt been modified yet
                         button = Button(
