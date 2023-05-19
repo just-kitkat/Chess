@@ -523,11 +523,16 @@ class Chessboard(Widget):
                         Color(0.98, 0.98, 0.88, 1)  # light square
                     else:
                         Color(0.5, 0.7, 0.4, 1)  # dark square
+                    
+                    final_pos = (
+                        x*pos + Window.size[0]//2 - size[0]*4,
+                        y*pos + Window.size[1]//2 - size[1]*4
+                        )
                     if self.squares[y][x] == self.board[y][x]:
-                        rect = Rectangle(pos=(x*pos, y*pos), size=size)
+                        rect = Rectangle(pos=final_pos, size=size)
                         self.squares[y][x] = rect
                     else:
-                        self.squares[y][x].pos = (x*pos, y*pos)
+                        self.squares[y][x].pos = final_pos
                         self.squares[y][x].size = size
 
             # Draw row indices
@@ -575,12 +580,16 @@ class Chessboard(Widget):
         with self.canvas:
             for y, row in enumerate(self.board):
                 for x, col in enumerate(row):
+                    final_pos = (
+                        x*pos + Window.size[0]//2 - size[0]*4,
+                        (7-y)*pos + Window.size[1]//2 - size[1]*4
+                        )
                     if self.pieces[y][x] == col: # check if pieces store board or btns. if board, it means it hasnt been modified yet
                         button = Button(
                             text=self.piece_map[self.board[y][x]],
                             font_name="DejaVuSans",
                             font_size=min(size[0]/1.5, 60),
-                            pos=(x*pos, (7-y)*pos), # display fix
+                            pos=final_pos, # display fix
                             size=size,
                             halign="center",
                             valign="middle",
@@ -594,7 +603,7 @@ class Chessboard(Widget):
                         values = (
                             self.piece_map[self.board[y][x]], # text
                             min(size[0]/1.5, 60), # font_size
-                            (x*pos, (7-y)*pos), # pos
+                            final_pos, # pos
                             size, # size
                         )
                         self.pieces[y][x].text, self.pieces[y][x].font_size, self.pieces[y][x].pos, self.pieces[y][x].size = values
