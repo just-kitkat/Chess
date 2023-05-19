@@ -24,7 +24,9 @@ import os   # For executable (_MEIPASS)
 import sys  # For executable (_MEIPASS)
 import trio # For async code
 from copy import deepcopy # Used for board copying operations (nested list)
-from typing import Literal, List, Optional
+from typing import Literal, List, Optional # Type annotations
+
+# Kivy related imports
 from kivymd.app import MDApp
 from kivy.lang import Builder
 from kivy.core.window import Window
@@ -39,21 +41,12 @@ from kivy.uix.modalview import ModalView
 from kivy.uix.gridlayout import GridLayout
 from kivymd.uix.button import MDFlatButton
 
-"""
-Error Classes
-"""
-
-class InvalidMove(Exception):
-    pass
-
-class KingMissing(Exception):
-    pass
-
+# Import Errors
+from Errors.errors import InvalidMove, KingMissing
 
 """
 Chess Game Logic
 """
-
 class Game:
     """
     This class consists of the chess game logic.
