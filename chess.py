@@ -537,11 +537,15 @@ class Chessboard(Widget):
 
             # Draw row indices
             for j in range(8):
+                final_pos = (
+                    Window.size[0]/2-size[0]*4,
+                    j*pos+size[1]/1.5+Window.size[1]/2-size[1]*4
+                    )
                 if self.coords["y"][7] == 8:
                     label = Label(
                         text=str(j+1),
                         font_size=coord_size[0],
-                        pos=(0, j*pos+size[1]/1.5),
+                        pos=final_pos,
                         size=coord_size,
                         halign="center",
                         valign="middle",
@@ -551,16 +555,20 @@ class Chessboard(Widget):
                     self.add_widget(label)
                 else:
                     self.coords["y"][j].font_size = coord_size[0]
-                    self.coords["y"][j].pos = (0, j*pos+size[1]/1.5)
+                    self.coords["y"][j].pos = final_pos
                     self.coords["y"][j].size = coord_size
 
             # Draw column indices
             for i, col in enumerate("abcdefgh"):
+                final_pos = (
+                    i*pos+size[0]/1.33+Window.size[0]/2-size[0]*4,
+                    Window.size[1]/2-size[1]*4
+                    )
                 if self.coords["x"][-1] == "h":
                     label = Label(
                         text=col,
                         font_size=coord_size[0],
-                        pos=(i*pos+size[0]/1.33, 0),
+                        pos=final_pos,
                         size=coord_size,
                         halign="center",
                         valign="middle",
@@ -570,7 +578,7 @@ class Chessboard(Widget):
                     self.add_widget(label)
                 else:
                     self.coords["x"][i].font_size = coord_size[0]
-                    self.coords["x"][i].pos = (i*pos+size[0]/1.33, 0)
+                    self.coords["x"][i].pos = final_pos
                     self.coords["x"][i].size = coord_size
 
     def draw_pieces(self, size, pos):
