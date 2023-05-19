@@ -1,1 +1,0 @@
-add DejaVuSans.ttf in this folder before exporting into an apk

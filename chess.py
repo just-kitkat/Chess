@@ -695,7 +695,7 @@ class Chessboard(Widget):
         for y, row in enumerate(self.squares):
             for x, col in enumerate(row):
                 if [x, y] in valids:
-                    self.squares[7-y][x].source = resource_path(f"assets/move_indicator.jpg")
+                    self.squares[7-y][x].source = resource_path(f"Assets/move_indicator.jpg")
                 else:
                     self.squares[7-y][x].source = None
 
