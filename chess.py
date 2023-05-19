@@ -738,6 +738,7 @@ To-Do:
 - Make move indicator smaller
 - If piece can be taken, change move indicator shape to a grey square with transparent circle in the center
 - Make pawn promotion GUI dynamically sized
+- Create a server to get latest game news and updates using a RESTAPI
 
 Verified Bugs:
 - 
