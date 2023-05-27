@@ -16,41 +16,43 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from copy import deepcopy                       # Used for board copying operations (nested list)
+import os                                       # For executable (_MEIPASS)
+import sys                                      # For executable (_MEIPASS)
+from typing import Literal, List, Optional      # Type annotations
+import trio                                     # For async code
+
 # Remove red dots when user right clicks
 from kivy.config import Config
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
-import os   # For executable (_MEIPASS)
-import sys  # For executable (_MEIPASS)
-import trio # For async code
-from copy import deepcopy # Used for board copying operations (nested list)
-from typing import Literal, List, Optional # Type annotations
-
-# Kivy related imports
 from kivymd.app import MDApp
-from kivy.lang import Builder
-from kivy.core.window import Window
-from kivy.graphics import Rectangle, Color
-from kivy.uix.popup import Popup
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.uix.widget import Widget
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.screenmanager import Screen, ScreenManager
-from kivy.uix.modalview import ModalView
-from kivy.uix.gridlayout import GridLayout
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 
-# Import Errors
+from kivy.lang import Builder
+from kivy.graphics import Rectangle, Color
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.modalview import ModalView
+from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.widget import Widget
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.core.window import Window
+
 from Errors.errors import InvalidMove, KingMissing
+
 
 """
 Chess Game Logic
 """
+
 class Game:
     """
     This class consists of the chess game logic.
     """
+
     def __init__(self):
         self.board = [
             ["BR", "BN", "BB", "BQ", "BK", "BB", "BN", "BR"],
@@ -70,7 +72,7 @@ class Game:
         self.wait_for_promotion = trio.Event()
         self.pawn_promoted_to = None
         self.castle_status = {
-            "W": [True, True], # O-O, O-O-O
+            "W": [True, True],  # O-O, O-O-O
             "B": [True, True]
         }
         self.letter_match = {
@@ -95,13 +97,15 @@ class Game:
             "BN": "\u265E",
         }
 
-    def coords_to_index(self, coords: str, to_return: Literal["int", "str"]="int") -> str | list:
+    def coords_to_index(self, coords: str, to_return: Literal["int", "str"] = "int") -> str | list:
         """
         This function converts coords to index form so it can be
         located in the nested list (board)
         """
         x, y = coords[0], coords[1]
-        return [self.letter_match[x], 8 - int(y)] if to_return == "int" else f"{self.letter_match[x]}{8 - int(y)}"
+        return [
+            self.letter_match[x], 8 - int(y)
+            ] if to_return == "int" else f"{self.letter_match[x]}{8 - int(y)}"
 
     def index_to_coords(self, index: str):
         """
@@ -110,7 +114,7 @@ class Game:
         """
         return f"{chr(int(index[0])+97)}{8 - int(index[1])}"
 
-    def get_king_coords(self, color: str, board: Optional[List[list]]=None):
+    def get_king_coords(self, color: str, board: Optional[List[list]] = None):
         """
         This function gets the coods of the king
         Returns "0" if king cannot be found
@@ -123,14 +127,23 @@ class Game:
                     return self.index_to_coords(f"{x}{y}")
         raise KingMissing("The king cannot be found on the board!")
 
-    def find_pawn_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int, return_check: bool=False) -> List[str]:
-        # Find valid pawn movements
+    def find_pawn_moves(
+            self,
+            color: Literal["W", "B"],
+            piece_x: int,
+            piece_y: int,
+            return_check: bool = False
+        ) -> List[str]:
+        """
+        Finds all valid pawn moves
+        """
         ret = []
-        if not return_check: # if return_check, only check for takes 
-            ## Find valid vert movements (1/ 2 up for first move)
+        if not return_check:  # if return_check, only check for takes
+            # Find valid vert movements (1/ 2 up for first move)
             can_move_vertically = False
             # Single vert moves
-            new_x, new_y = (piece_x, piece_y+1) if color == "B" else (piece_x, piece_y-1)
+            new_x, new_y = (piece_x, piece_y +
+                            1) if color == "B" else (piece_x, piece_y-1)
             if self.board[new_y][new_x] == "  " and piece_x == new_x:
                 can_move_vertically = True
                 ret.append(f"{new_x}{new_y}")
@@ -138,13 +151,14 @@ class Game:
             # Double vert moves
             # First, check if the pawn is on it's home square
             if can_move_vertically and ((piece_y == 1 and color == "B") or (piece_y == 6 and color == "W")):
-                new_x, new_y = (piece_x, piece_y+2) if color == "B" else (piece_x, piece_y-2)
+                new_x, new_y = (piece_x, piece_y +
+                                2) if color == "B" else (piece_x, piece_y-2)
                 if self.board[new_y][new_x] == "  " and piece_x == new_x:
                     ret.append(f"{new_x}{new_y}")
 
         # Check for diagonal movement
         new_y = piece_y+1 if color == "B" else piece_y-1
-        ## Check for left/right diagonals
+        # Check for left/right diagonals
         for i in (-1, 1):
             new_x = piece_x + i
             if 0 <= new_x < 8:
@@ -155,7 +169,16 @@ class Game:
 
         return ret if not return_check else False
 
-    def find_horizontal_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int, return_check: bool=False) -> List[str] | bool:
+    def find_horizontal_moves(
+            self,
+            color: Literal["W", "B"],
+            piece_x: int,
+            piece_y: int,
+            return_check: bool = False
+        ) -> List[str] | bool:
+        """
+        Find all valid left and right movements
+        """
         ret = []
         # Check for valid left movements and right movements
         ind = 0
@@ -163,11 +186,13 @@ class Game:
             for x in movements:
                 new_x = piece_x - x if ind == 0 else piece_x + x
 
-                # Check if potential square is not occupied by your own piece, else stop checking further
+                # Check if potential square is not occupied by your own piece, 
+                # else stop checking further
                 if self.board[piece_y][new_x][0] != color:
                     ret.append(f"{new_x}{piece_y}")
 
-                    # If that spot is occupied by opponent's piece, stop checking for moves further along axis
+                    # If that spot is occupied by opponent's piece, 
+                    # stop checking for moves further along axis
                     if self.board[piece_y][new_x][0] == ("W" if color == "B" else "B"):
                         if return_check and self.board[piece_y][new_x][1] in ["R", "Q"]:
                             return True
@@ -178,19 +203,28 @@ class Game:
             ind += 1
         return ret if not return_check else False
 
-    def find_vertical_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int, return_check: bool=False) -> List[str] | bool:
+    def find_vertical_moves(
+            self, color: Literal["W", "B"], 
+            piece_x: int, 
+            piece_y: int, 
+            return_check: bool = False
+        ) -> List[str] | bool:
+        """
+        Checks for all valid up and down movements
+        """
         ret = []
-        # Check for valid up movements and down movements
         ind = 0
         for movements in (range(1, piece_y + 1), range(1, 8-piece_y)):
             for y in movements:
                 new_y = piece_y - y if ind == 0 else piece_y + y
 
-                # Check if potential square is not occupied by your own piece, else stop checking further
+                # Check if potential square is not occupied by your own piece, 
+                # else stop checking further
                 if self.board[new_y][piece_x][0] != color:
                     ret.append(f"{piece_x}{new_y}")
 
-                    # If that spot is occupied by opponent's piece, stop checking for moves further along axis
+                    # If that spot is occupied by opponent's piece, 
+                    # stop checking for moves further along axis
                     if self.board[new_y][piece_x][0] == ("W" if color == "B" else "B"):
                         if return_check and self.board[new_y][piece_x][1] in ["R", "Q"]:
                             return True
@@ -201,7 +235,16 @@ class Game:
             ind += 1
         return ret if not return_check else False
 
-    def find_diagonal_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int, return_check: bool=False) -> List[str] | bool:
+    def find_diagonal_moves(
+            self, 
+            color: Literal["W", "B"], 
+            piece_x: int, 
+            piece_y: int, 
+            return_check: bool = False
+        ) -> List[str] | bool:
+        """
+        Find all diagonal moves
+        """
         ret = []
         for y in (-1, 1):
             for x in (-1, 1):
@@ -210,7 +253,8 @@ class Game:
                     if self.board[piece_y+mody][piece_x+modx][0] != color:
                         ret.append(f"{piece_x+modx}{piece_y+mody}")
 
-                        # If that spot is occupied by opponent's piece, stop checking for moves further along axis
+                        # If that spot is occupied by opponent's piece, 
+                        # stop checking for moves further along axis
                         if self.board[piece_y+mody][piece_x+modx][0] == ("W" if color == "B" else "B"):
 
                             if return_check and self.board[piece_y+mody][piece_x+modx][1] in ["B", "Q"]:
@@ -224,12 +268,22 @@ class Game:
 
         return ret if not return_check else False
 
-    def find_knight_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int, return_check: bool=False) -> List[str] | bool:
+    def find_knight_moves(
+            self, 
+            color: Literal["W", "B"], 
+            piece_x: int, 
+            piece_y: int, 
+            return_check: bool = False
+        ) -> List[str] | bool:
+        """
+        Find all valid knight moves (L shape)
+        """
         ret = []
         for mody in (-2, -1, 1, 2):
             for modx in (-2, -1, 1, 2):
                 if 0 <= piece_x+modx < 8 and 0 <= piece_y+mody < 8:
-                    if abs(modx) == abs(mody): continue # Skip check if x and y change is same because only L shaped movements should be checked
+                    if abs(modx) == abs(mody):
+                        continue  # Skip check if x and y change is same because only L shaped movements should be checked
                     if self.board[piece_y+mody][piece_x+modx][0] != color:
                         ret.append(f"{piece_x+modx}{piece_y+mody}")
                         if return_check and self.board[piece_y+mody][piece_x+modx][1] == "N":
@@ -237,11 +291,21 @@ class Game:
 
         return ret if not return_check else False
 
-    def find_adj_moves(self, color: Literal["W", "B"], piece_x: int, piece_y: int, return_check: bool=False) -> List[str]:
+    def find_adj_moves(
+            self, 
+            color: Literal["W", "B"], 
+            piece_x: int, 
+            piece_y: int, 
+            return_check: bool = False
+        ) -> List[str]:
+        """
+        Finds all adjacent moves (mostly used for king movement)
+        """
         ret = []
         for mody in (-1, 0, 1):
             for modx in (-1, 0, 1):
-                if mody == 0 and modx == 0: continue
+                if mody == 0 and modx == 0:
+                    continue
                 if 0 <= piece_x+modx < 8 and 0 <= piece_y+mody < 8:
                     if self.board[piece_y+mody][piece_x+modx][0] != color:
                         ret.append(f"{piece_x+modx}{piece_y+mody}")
@@ -250,7 +314,13 @@ class Game:
 
         return ret if not return_check else False
 
-    def is_in_check(self, color: Literal["W", "B"], piece_x: int, piece_y: int, temp_board: Optional[List[list]]=None) -> bool:
+    def is_in_check(
+            self, 
+            color: Literal["W", "B"], 
+            piece_x: int, 
+            piece_y: int, 
+            temp_board: Optional[List[list]] = None
+        ) -> bool:
         """
         This function checks if a "potential" position
         on the board is threatened.
@@ -258,12 +328,16 @@ class Game:
         players don't castle into check ect.
         """
         original_board = deepcopy(self.board)
-        if temp_board is None: temp_board = self.board
+        if temp_board is None:
+            temp_board = self.board
         self.board = deepcopy(temp_board)
         in_check = []
-        in_check.append(self.find_horizontal_moves(color, piece_x, piece_y, True))
-        in_check.append(self.find_vertical_moves(color, piece_x, piece_y, True))
-        in_check.append(self.find_diagonal_moves(color, piece_x, piece_y, True))
+        in_check.append(self.find_horizontal_moves(
+            color, piece_x, piece_y, True))
+        in_check.append(self.find_vertical_moves(
+            color, piece_x, piece_y, True))
+        in_check.append(self.find_diagonal_moves(
+            color, piece_x, piece_y, True))
         in_check.append(self.find_knight_moves(color, piece_x, piece_y, True))
         in_check.append(self.find_adj_moves(color, piece_x, piece_y, True))
         in_check.append(self.find_pawn_moves(color, piece_x, piece_y, True))
@@ -283,12 +357,13 @@ class Game:
             raise InvalidMove
 
         # Check for valid pawn movement
-        if piece[-1] == "P": # "P" in "WP"
+        if piece[-1] == "P":  # "P" in "WP"
             valid_moves += self.find_pawn_moves(piece[0], piece_x, piece_y)
 
         # Check for rook movement
         if piece[-1] == "R":
-            valid_moves += self.find_horizontal_moves(piece[0], piece_x, piece_y)
+            valid_moves += self.find_horizontal_moves(
+                piece[0], piece_x, piece_y)
             valid_moves += self.find_vertical_moves(piece[0], piece_x, piece_y)
 
         # Check for knight movement
@@ -300,7 +375,8 @@ class Game:
             valid_moves += self.find_diagonal_moves(piece[0], piece_x, piece_y)
 
         if piece[-1] == "Q":
-            valid_moves += self.find_horizontal_moves(piece[0], piece_x, piece_y)
+            valid_moves += self.find_horizontal_moves(
+                piece[0], piece_x, piece_y)
             valid_moves += self.find_vertical_moves(piece[0], piece_x, piece_y)
             valid_moves += self.find_diagonal_moves(piece[0], piece_x, piece_y)
 
@@ -314,9 +390,9 @@ class Game:
             "B": ...
             }
             """
-            if not self.is_in_check(color, piece_x, piece_y): # king cannot castle if in check!
+            if not self.is_in_check(color, piece_x, piece_y):  # king cannot castle if in check!
                 castling = self.castle_status[color]
-                num = 7 if color == "W" else 0 # row coord
+                num = 7 if color == "W" else 0  # row coord
                 # King's side castling (O-O)
                 if not self.is_in_check(color, 5, num) and castling[0] and all(self.board[num][i] == "  " for i in range(5, 7)) and self.board[num][7] == f"{color}R":
                     valid_moves.append(f"6{num} O-O")
@@ -330,37 +406,48 @@ class Game:
             temp_board = deepcopy(self.board)
             temp_board[piece_y][piece_x] = "  "
             temp_board[y][x] = piece
-            king_pos = self.coords_to_index(self.get_king_coords(piece[0], temp_board))
+            king_pos = self.coords_to_index(
+                self.get_king_coords(piece[0], temp_board))
             if self.is_in_check(piece[0], king_pos[0], king_pos[1], temp_board):
                 valid_moves.remove(move)
 
-
         print("Valid Moves:", [self.index_to_coords(i) for i in valid_moves])
         return valid_moves
-    
+
     def select_piece(self, button):
+        """
+        Called when a user selects a piece to promote their pawn to.
+        """
         self.pawn_promotion_view.dismiss()
-        self.pawn_promoted_to = list(self.pieces)[list(self.pieces.values()).index(button.text)]
+        self.pawn_promoted_to = list(self.pieces)[list(
+            self.pieces.values()).index(button.text)]
         self.wait_for_promotion.set()
 
-    def prompt_for_promotion(self, color: Literal["W", "B"]) -> Literal["Q", "R", "B", "N"] | None:
+    def prompt_for_promotion(
+            self, 
+            color: Literal["W", "B"]
+        ) -> Literal["Q", "R", "B", "N"] | None:
         """
         Open a ModalView to prompt for pawn promotion piece choice
         """
         print("Prompting for pawn promotion!")
         if not self.pawn_promotion_view:
             box = GridLayout(rows=4, cols=1)
-            box.add_widget(MDFlatButton(text=self.pieces["WQ"], on_release=self.select_piece))
-            box.add_widget(MDFlatButton(text=self.pieces["WR"], on_release=self.select_piece))
-            box.add_widget(MDFlatButton(text=self.pieces["WB"], on_release=self.select_piece))
-            box.add_widget(MDFlatButton(text=self.pieces["WN"], on_release=self.select_piece))
+            box.add_widget(MDFlatButton(
+                text=self.pieces["WQ"], on_release=self.select_piece))
+            box.add_widget(MDFlatButton(
+                text=self.pieces["WR"], on_release=self.select_piece))
+            box.add_widget(MDFlatButton(
+                text=self.pieces["WB"], on_release=self.select_piece))
+            box.add_widget(MDFlatButton(
+                text=self.pieces["WN"], on_release=self.select_piece))
             self.pawn_promotion_view = ModalView(
                 size_hint=(None, None),
                 size=(75, 310),
                 background_color=(255, 255, 255, 1),
                 overlay_color=(0, 0, 0, 0.4),
                 padding=5
-                )
+            )
             self.pawn_promotion_view.add_widget(box)
         self.pawn_promotion_view.open()
 
@@ -404,14 +491,14 @@ class Game:
             print(num, new_y)
             if piece_type[1] == "P" and new_y == num:
                 self.pawn_promotion = True
-                
+
             self.args_to_pass = piece_x, piece_y, new_x, new_y, piece_type, pos, castling_moves, color
             if self.pawn_promotion:
                 self.pawn_promoted_to = None
                 self.wait_for_promotion = trio.Event()
                 self.prompt_for_promotion(color)
                 await self.wait_for_promotion.wait()
-            
+
             # Check pawn promotion
             if self.pawn_promoted_to is not None:
                 piece_type = self.pawn_promoted_to
@@ -421,7 +508,8 @@ class Game:
             self.board[new_y][new_x] = piece_type
             # Check if move is a castling move
             if pos in castling_moves:
-                self.board[new_y][new_x+1 if pos[0] < "4" else new_x-1] = f"{color}R"
+                self.board[new_y][new_x+1 if pos[0]
+                                  < "4" else new_x-1] = f"{color}R"
                 self.board[new_y][0 if pos[0] < "4" else 7] = "  "
                 # mark castling as illegal now
                 self.castle_status[color] = [False, False]
@@ -440,12 +528,12 @@ class Game:
                     winner = "White" if color == "B" else "Black"
                     return winner
             return True
-    
 
 
 """
 Game GUI code below!
 """
+
 
 def resource_path(relative_path):
     """
@@ -462,8 +550,10 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
+
 class WindowManager(ScreenManager):
     pass
+
 
 class WelcomeWindow(Screen):
     pass
@@ -500,10 +590,10 @@ class Chessboard(Widget):
         }
         self.valid_moves = []
         self.pieces = deepcopy(self.board)
-        self.squares = deepcopy(self.board) # to store pos of board squares
+        self.squares = deepcopy(self.board)  # to store pos of board squares
         self.coords = {
-            "y": [i for i in range(1, 9)], # [1, 2, ...]
-            "x": [chr(i) for i in range(97, 105)] # ["a", "b", ...]
+            "y": [i for i in range(1, 9)],  # [1, 2, ...]
+            "x": [chr(i) for i in range(97, 105)]  # ["a", "b", ...]
         }
 
     def start_new_game(self, *args):
@@ -513,6 +603,9 @@ class Chessboard(Widget):
         print("This feature is under development")
 
     def draw_board(self, size, pos):
+        """
+        This function draws the entire board including coordinates.
+        """
         coord_size = size[0]/4, size[1]/4
         with self.canvas:
             # Draw board squares
@@ -522,11 +615,11 @@ class Chessboard(Widget):
                         Color(0.98, 0.98, 0.88, 1)  # light square
                     else:
                         Color(0.5, 0.7, 0.4, 1)  # dark square
-                    
+
                     final_pos = (
                         x*pos + self.width//2 - size[0]*4,
                         y*pos + self.height//2 - size[1]*4
-                        )
+                    )
                     if self.squares[y][x] == self.board[y][x]:
                         rect = Rectangle(pos=final_pos, size=size)
                         self.squares[y][x] = rect
@@ -539,7 +632,7 @@ class Chessboard(Widget):
                 final_pos = (
                     self.width/2-size[0]*4,
                     j*pos+size[1]/1.5+self.height/2-size[1]*4
-                    )
+                )
                 if self.coords["y"][7] == 8:
                     label = Label(
                         text=str(j+1),
@@ -549,7 +642,7 @@ class Chessboard(Widget):
                         halign="center",
                         valign="middle",
                         color=(0, 0, 0, 1)
-                        )
+                    )
                     self.coords["y"][j] = label
                     self.add_widget(label)
                 else:
@@ -562,7 +655,7 @@ class Chessboard(Widget):
                 final_pos = (
                     i*pos+size[0]/1.33+self.width/2-size[0]*4,
                     self.height/2-size[1]*4
-                    )
+                )
                 if self.coords["x"][-1] == "h":
                     label = Label(
                         text=col,
@@ -572,7 +665,7 @@ class Chessboard(Widget):
                         halign="center",
                         valign="middle",
                         color=(0, 0, 0, 1)
-                        )
+                    )
                     self.coords["x"][i] = label
                     self.add_widget(label)
                 else:
@@ -590,32 +683,34 @@ class Chessboard(Widget):
                     final_pos = (
                         x*pos + self.width//2 - size[0]*4,
                         (7-y)*pos + self.height//2 - size[1]*4
-                        )
-                    if self.pieces[y][x] == col: # check if pieces store board or btns. if board, it means it hasnt been modified yet
+                    )
+                    # check if pieces store board or btns. 
+                    # if board, it means it hasnt been modified yet
+                    if self.pieces[y][x] == col:
                         button = Button(
                             text=self.piece_map[self.board[y][x]],
                             font_name="DejaVuSans",
                             font_size=min(size[0]/1.5, 60),
-                            pos=final_pos, # display fix
+                            pos=final_pos,  # display fix
                             size=size,
                             halign="center",
                             valign="middle",
                             color=(0, 0, 0, 1),
                             background_color=(0, 0, 0, 0)
-                            )
+                        )
                         button.bind(on_release=self.click)
                         self.pieces[y][x] = button
                         self.add_widget(button)
                     else:
                         values = (
-                            self.piece_map[self.board[y][x]], # text
-                            min(size[0]/1.5, 60), # font_size
-                            final_pos, # pos
-                            size, # size
+                            self.piece_map[self.board[y][x]],  # text
+                            min(size[0]/1.5, 60),  # font_size
+                            final_pos,  # pos
+                            size,  # size
                         )
                         self.pieces[y][x].text, self.pieces[y][x].font_size, self.pieces[y][x].pos, self.pieces[y][x].size = values
 
-    def on_size(self, *args): # this func gets called when screen size changes (i think)
+    def on_size(self, *args):
         """
         Whenever the screen size is changed or the board needs updating,
         this function gets called.
@@ -638,7 +733,7 @@ class Chessboard(Widget):
         This will start a trio task to enable async behaviour!
         """
         inst.nursery.start_soon(self.async_click, btn)
-        
+
     async def async_click(self, btn: str):
         """
         Handles piece selection
@@ -649,12 +744,14 @@ class Chessboard(Widget):
                 if col == btn:
                     index = f"{x}{y}"
                     break
-            if index is not None: break
+            if index is not None:
+                break
         square = self.game.index_to_coords(index)
         valid_moves = []
-        if btn.text != "  ": 
+        if btn.text != "  ":
             valid_moves = self.game.get_valid_moves(square)
-            valid_moves = [self.game.index_to_coords(ind) for ind in valid_moves]
+            valid_moves = [self.game.index_to_coords(
+                ind) for ind in valid_moves]
 
         if btn.text != "  " and square not in self.valid_moves:
             self.selected = square
@@ -666,7 +763,8 @@ class Chessboard(Widget):
         else:
             if square in self.valid_moves:
                 try:
-                    movement = await self.game.move(self.selected, square) # returns color if there is a winner
+                    # returns color if there is a winner
+                    movement = await self.game.move(self.selected, square)
                     print("movement:", movement)
                     if movement in ("White", "Black"):
                         winner = movement
@@ -674,7 +772,8 @@ class Chessboard(Widget):
 
                         content = BoxLayout(orientation="vertical")
 
-                        new_game = MDRaisedButton(text="New Game", pos_hint={"center_x": 0.5}, size_hint=(1, 1))
+                        new_game = MDRaisedButton(text="New Game", pos_hint={
+                                                  "center_x": 0.5}, size_hint=(1, 1))
                         win_msg = Label(text=f"{winner} won by checkmate!")
 
                         content.add_widget(win_msg)
@@ -696,12 +795,13 @@ class Chessboard(Widget):
 
             self.selected = ""
             self.valid_moves = []
-        
+
         valids = [self.game.coords_to_index(i) for i in self.valid_moves]
         for y, row in enumerate(self.squares):
             for x, col in enumerate(row):
                 if [x, y] in valids:
-                    self.squares[7-y][x].source = resource_path(f"Assets/move_indicator.jpg")
+                    self.squares[7-y][x].source = resource_path(
+                        f"Assets/move_indicator.jpg")
                 else:
                     self.squares[7-y][x].source = None
 
@@ -712,19 +812,22 @@ class ChessApp(MDApp):
         self.nursery = nursery
 
     def build(self):
-        self.use_kivy_settings = False # to be used in the future!
+        self.use_kivy_settings = False  # to be used in the future!
         self.theme_cls.theme_style = "Dark"
         kv = Builder.load_file(resource_path("chess.kv"))
         return kv
-    
+
+
 inst = None
+
+
 async def main():
     global inst
     async with trio.open_nursery() as nursery:
         inst = ChessApp(nursery)
-        await inst.async_run(async_lib="trio") # start app!
+        await inst.async_run(async_lib="trio")  # start app!
         nursery.cancel_scope.cancel()
-    
+
 if __name__ == '__main__':
     trio.run(main)
 
