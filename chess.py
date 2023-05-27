@@ -109,7 +109,7 @@ class Game:
 
     def index_to_coords(self, index: str):
         """
-        This function converts board indicies to coordinate form! 
+        This function converts board indicies to coordinate form!
         E.g. "00" -> "a8"
         """
         return f"{chr(int(index[0])+97)}{8 - int(index[1])}"
@@ -186,12 +186,12 @@ class Game:
             for x in movements:
                 new_x = piece_x - x if ind == 0 else piece_x + x
 
-                # Check if potential square is not occupied by your own piece, 
+                # Check if potential square is not occupied by your own piece,
                 # else stop checking further
                 if self.board[piece_y][new_x][0] != color:
                     ret.append(f"{new_x}{piece_y}")
 
-                    # If that spot is occupied by opponent's piece, 
+                    # If that spot is occupied by opponent's piece,
                     # stop checking for moves further along axis
                     if self.board[piece_y][new_x][0] == ("W" if color == "B" else "B"):
                         if return_check and self.board[piece_y][new_x][1] in ["R", "Q"]:
@@ -204,9 +204,9 @@ class Game:
         return ret if not return_check else False
 
     def find_vertical_moves(
-            self, color: Literal["W", "B"], 
-            piece_x: int, 
-            piece_y: int, 
+            self, color: Literal["W", "B"],
+            piece_x: int,
+            piece_y: int,
             return_check: bool = False
         ) -> List[str] | bool:
         """
@@ -218,12 +218,12 @@ class Game:
             for y in movements:
                 new_y = piece_y - y if ind == 0 else piece_y + y
 
-                # Check if potential square is not occupied by your own piece, 
+                # Check if potential square is not occupied by your own piece,
                 # else stop checking further
                 if self.board[new_y][piece_x][0] != color:
                     ret.append(f"{piece_x}{new_y}")
 
-                    # If that spot is occupied by opponent's piece, 
+                    # If that spot is occupied by opponent's piece,
                     # stop checking for moves further along axis
                     if self.board[new_y][piece_x][0] == ("W" if color == "B" else "B"):
                         if return_check and self.board[new_y][piece_x][1] in ["R", "Q"]:
@@ -236,10 +236,10 @@ class Game:
         return ret if not return_check else False
 
     def find_diagonal_moves(
-            self, 
-            color: Literal["W", "B"], 
-            piece_x: int, 
-            piece_y: int, 
+            self,
+            color: Literal["W", "B"],
+            piece_x: int,
+            piece_y: int,
             return_check: bool = False
         ) -> List[str] | bool:
         """
@@ -253,7 +253,7 @@ class Game:
                     if self.board[piece_y+mody][piece_x+modx][0] != color:
                         ret.append(f"{piece_x+modx}{piece_y+mody}")
 
-                        # If that spot is occupied by opponent's piece, 
+                        # If that spot is occupied by opponent's piece,
                         # stop checking for moves further along axis
                         if self.board[piece_y+mody][piece_x+modx][0] == ("W" if color == "B" else "B"):
 
@@ -269,10 +269,10 @@ class Game:
         return ret if not return_check else False
 
     def find_knight_moves(
-            self, 
-            color: Literal["W", "B"], 
-            piece_x: int, 
-            piece_y: int, 
+            self,
+            color: Literal["W", "B"],
+            piece_x: int,
+            piece_y: int,
             return_check: bool = False
         ) -> List[str] | bool:
         """
@@ -292,10 +292,10 @@ class Game:
         return ret if not return_check else False
 
     def find_adj_moves(
-            self, 
-            color: Literal["W", "B"], 
-            piece_x: int, 
-            piece_y: int, 
+            self,
+            color: Literal["W", "B"],
+            piece_x: int,
+            piece_y: int,
             return_check: bool = False
         ) -> List[str]:
         """
@@ -315,10 +315,10 @@ class Game:
         return ret if not return_check else False
 
     def is_in_check(
-            self, 
-            color: Literal["W", "B"], 
-            piece_x: int, 
-            piece_y: int, 
+            self,
+            color: Literal["W", "B"],
+            piece_x: int,
+            piece_y: int,
             temp_board: Optional[List[list]] = None
         ) -> bool:
         """
@@ -424,7 +424,7 @@ class Game:
         self.wait_for_promotion.set()
 
     def prompt_for_promotion(
-            self, 
+            self,
             color: Literal["W", "B"]
         ) -> Literal["Q", "R", "B", "N"] | None:
         """
@@ -538,7 +538,7 @@ Game GUI code below!
 def resource_path(relative_path):
     """
     PyInstaller creates a temp folder and stores path in _MEIPASS
-    This function tries to find that path 
+    This function tries to find that path
 
     Note: This function is for EXEs. Feel free to remove it when compiling it to APKs.
     """
@@ -684,7 +684,7 @@ class Chessboard(Widget):
                         x*pos + self.width//2 - size[0]*4,
                         (7-y)*pos + self.height//2 - size[1]*4
                     )
-                    # check if pieces store board or btns. 
+                    # check if pieces store board or btns.
                     # if board, it means it hasnt been modified yet
                     if self.pieces[y][x] == col:
                         button = Button(
@@ -843,7 +843,7 @@ To-Do:
 - Create a server to get latest game news and updates using a RESTAPI
 
 Verified Bugs:
-- 
+-
 
 Unverified Bugs:
 -
