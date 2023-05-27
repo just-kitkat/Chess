@@ -39,7 +39,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.uix.modalview import ModalView
 from kivy.uix.gridlayout import GridLayout
-from kivymd.uix.button import MDFlatButton
+from kivymd.uix.button import MDFlatButton, MDRaisedButton
 
 # Import Errors
 from Errors.errors import InvalidMove, KingMissing
@@ -506,6 +506,12 @@ class Chessboard(Widget):
             "x": [chr(i) for i in range(97, 105)] # ["a", "b", ...]
         }
 
+    def start_new_game(self, *args):
+        """
+        This starts a new game when a game ends.
+        """
+        print("This feature is under development")
+
     def draw_board(self, size, pos):
         coord_size = size[0]/4, size[1]/4
         with self.canvas:
@@ -668,11 +674,11 @@ class Chessboard(Widget):
 
                         content = BoxLayout(orientation="vertical")
 
-                        close_popup = Button(text="Close")
+                        new_game = MDRaisedButton(text="New Game", pos_hint={"center_x": 0.5}, size_hint=(1, 1))
                         win_msg = Label(text=f"{winner} won by checkmate!")
 
                         content.add_widget(win_msg)
-                        content.add_widget(close_popup)
+                        content.add_widget(new_game)
 
                         winner_popup = Popup(
                             title=f"{winner} wins",
@@ -681,7 +687,7 @@ class Chessboard(Widget):
                             content=content,
                             size_hint=(0.7, 0.5)
                         )
-                        close_popup.bind(on_press=winner_popup.dismiss)
+                        new_game.bind(on_press=self.start_new_game)
                         winner_popup.open()
 
                 except InvalidMove:
