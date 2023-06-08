@@ -64,7 +64,7 @@ class Game:
             ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
             ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"],
         ]
-        self.turn = "white"
+        self.turn = "W"
         self.moves = 0
         self.winner = None
         self.warning = ""
@@ -355,6 +355,9 @@ class Game:
 
         if piece[0] not in ("W", "B"):
             raise InvalidMove
+        
+        if color != self.turn: # No valid moves if it isn't user's turn
+            return []
 
         # Check for valid pawn movement
         if piece[-1] == "P":  # "P" in "WP"
@@ -515,7 +518,12 @@ class Game:
                 self.castle_status[color] = [False, False]
 
             # Check if opponent has ANY valid moves
-            color = "W" if color == "B" else "B"
+            color = "W" if color == "B" else "B" # swap colors for check
+
+            # Swap turn before checking for mate is because 
+            # self.turn returns [] in get_valid_moves if it is not the user's turn
+            self.turn = "W" if self.turn == "B" else "B" 
+
             has_valid_moves = False
             king_pos = self.coords_to_index(self.get_king_coords(color))
             if self.is_in_check(color, king_pos[0], king_pos[1]):
@@ -527,6 +535,7 @@ class Game:
                 if not has_valid_moves:
                     winner = "White" if color == "B" else "Black"
                     return winner
+                
             return True
 
 
