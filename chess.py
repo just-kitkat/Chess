@@ -843,8 +843,6 @@ if __name__ == '__main__':
 """
 To-Do:
 - En Passant
-- Switch between black and white moves
-    - disabled for now so it is easier to test stuff!
 - Add stalemate. (game currently just does not allow the player to move)
 - Make move indicator smaller
 - If piece can be taken, change move indicator shape to a grey square with transparent circle in the center
