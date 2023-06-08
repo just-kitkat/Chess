@@ -501,7 +501,7 @@ class Game:
 
             # Check pawn promotion
             if self.pawn_promoted_to is not None:
-                piece_type = self.pawn_promoted_to
+                piece_type, self.pawn_promoted_to = self.pawn_promoted_to, None
 
             # Move piece
             self.board[piece_y][piece_x] = "  "
