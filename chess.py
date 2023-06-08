@@ -64,6 +64,16 @@ class Game:
             ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
             ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"],
         ]
+        self.board = [
+            ["  ", "  ", "  ", "BK", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "WQ"],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "WK"],
+        ]
         self.turn = "W"
         self.moves = 0
         self.winner = None
@@ -526,15 +536,20 @@ class Game:
 
             has_valid_moves = False
             king_pos = self.coords_to_index(self.get_king_coords(color))
-            if self.is_in_check(color, king_pos[0], king_pos[1]):
-                for y, row in enumerate(self.board):
-                    for x, col in enumerate(row):
-                        if col[0] == color and self.get_valid_moves(self.index_to_coords(f"{x}{y}")) != []:
-                            has_valid_moves = True
-                            break
-                if not has_valid_moves:
-                    winner = "White" if color == "B" else "Black"
-                    return winner
+
+            # Check for either a checkmate or stalemate
+            for y, row in enumerate(self.board):
+                for x, col in enumerate(row):
+                    if col[0] == color and self.get_valid_moves(self.index_to_coords(f"{x}{y}")) != []:
+                        has_valid_moves = True
+                        break
+            if not has_valid_moves:
+                winner = "White" if color == "B" else "Black"
+                if self.is_in_check(color, king_pos[0], king_pos[1]):
+                    status = "checkmate"
+                else:
+                    status = "stalemate"
+                return winner, status
                 
             return True
 
@@ -775,21 +790,27 @@ class Chessboard(Widget):
                     # returns color if there is a winner
                     movement = await self.game.move(self.selected, square)
                     print("movement:", movement)
-                    if movement in ("White", "Black"):
-                        winner = movement
-                        print(f"Checkmate!!! {winner} won!")
-
+                    if isinstance(movement, tuple):
+                        winner, status = movement # note: if stalemate, winner var is not used
                         content = BoxLayout(orientation="vertical")
+                        new_game = MDRaisedButton(
+                            text="New Game", 
+                            pos_hint={"center_x": 0.5}, 
+                            size_hint=(1, 1)
+                            )
+                        
+                        if status == "checkmate":
+                            title = f"{winner} Wins"
+                            msg = Label(text=f"{winner} won by checkmate!")
 
-                        new_game = MDRaisedButton(text="New Game", pos_hint={
-                                                  "center_x": 0.5}, size_hint=(1, 1))
-                        win_msg = Label(text=f"{winner} won by checkmate!")
-
-                        content.add_widget(win_msg)
+                        elif status == "stalemate":
+                            title = "Stalemate"
+                            msg = Label(text="Draw by stalemate!")
+                        
+                        content.add_widget(msg)
                         content.add_widget(new_game)
-
                         winner_popup = Popup(
-                            title=f"{winner} wins",
+                            title=title,
                             title_align="center",
                             title_size=Window.size[0]*0.05,
                             content=content,
@@ -843,7 +864,6 @@ if __name__ == '__main__':
 """
 To-Do:
 - En Passant
-- Add stalemate. (game currently just does not allow the player to move)
 - Make move indicator smaller
 - If piece can be taken, change move indicator shape to a grey square with transparent circle in the center
 - Make pawn promotion GUI dynamically sized
